@@ -1,19 +1,25 @@
 package com.example.mushfiqkhan.flynntodoapp;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -27,6 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
+import static android.R.attr.path;
 import static android.R.id.content;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,8 +51,46 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                listItems.add("Clicked : "+clickCounter++);
-                adapter.notifyDataSetChanged();
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Title");
+                final EditText input = new EditText(MainActivity.this);
+                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String textToDO = input.getText().toString();
+                        listItems.add(0, textToDO);
+                        JSONObject obj = new JSONObject();
+                        try {
+                            obj.put("userId", 1);
+                            obj.put("id", listItems.size());
+                            obj.put("title", textToDO);
+                            TextView text = (TextView) findViewById(R.id.textTitle);
+                            if(text.getText().equals("Completed Tasks")) {
+                                obj.put("completed", true);
+                            }
+                            else {
+                                obj.put("completed", false);
+                            }
+                        } catch (JSONException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
             }
         });
         FloatingActionButton completedfab = (FloatingActionButton) findViewById(R.id.completed);
@@ -64,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 getList(false);
                 TextView text = (TextView) findViewById(R.id.textTitle);
-                text.setText("Incompleted Tasks");
+                text.setText("Incomplete Tasks");
             }
         });
 
