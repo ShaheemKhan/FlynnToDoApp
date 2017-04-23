@@ -6,13 +6,11 @@ import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -24,23 +22,23 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
-import static android.R.attr.path;
-import static android.R.id.content;
 
 public class MainActivity extends AppCompatActivity {
 
-    ArrayList<String> listItems = new ArrayList<String>();
+    ArrayList<String> listItems = new ArrayList();
     ArrayAdapter<String> adapter;
-    int clickCounter=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,21 +56,19 @@ public class MainActivity extends AppCompatActivity {
                 input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_CLASS_TEXT);
                 builder.setView(input);
 
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                AlertDialog.Builder builder1 = builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String textToDO = input.getText().toString();
-                        listItems.add(0, textToDO);
                         JSONObject obj = new JSONObject();
                         try {
                             obj.put("userId", 1);
                             obj.put("id", listItems.size());
                             obj.put("title", textToDO);
                             TextView text = (TextView) findViewById(R.id.textTitle);
-                            if(text.getText().equals("Completed Tasks")) {
+                            if (text.getText().equals("Completed Tasks")) {
                                 obj.put("completed", true);
-                            }
-                            else {
+                            } else {
                                 obj.put("completed", false);
                             }
                         } catch (JSONException e) {
@@ -80,7 +76,53 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
 
-                        adapter.notifyDataSetChanged();
+                        HttpURLConnection urlConnection;
+                        String url;
+                        String data = obj.toString();
+                        String result = null;
+                        try {
+                            //Connect
+                            urlConnection = (HttpURLConnection) ((new URL("https://jsonplaceholder.typicode.com/todos").openConnection()));
+                            urlConnection.setDoOutput(true);
+                            urlConnection.setRequestProperty("Content-Type", "application/json");
+                            urlConnection.setRequestProperty("Accept", "application/json");
+                            urlConnection.setRequestMethod("POST");
+                            urlConnection.connect();
+
+                            //Write
+                            OutputStream outputStream = urlConnection.getOutputStream();
+                            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+                            writer.write(data);
+                            writer.close();
+                            outputStream.close();
+
+                            //Read
+                            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+
+                            String line = null;
+                            StringBuilder sb = new StringBuilder();
+
+                            while ((line = bufferedReader.readLine()) != null) {
+                                sb.append(line);
+                            }
+
+                            bufferedReader.close();
+                            result = sb.toString();
+
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Log.i("hi", result);
+                        try {
+                            JSONObject res = new JSONObject(result);
+                            listItems.add(0, res.getString("title"));
+                            adapter.notifyDataSetChanged();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
                     }
                 });
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
