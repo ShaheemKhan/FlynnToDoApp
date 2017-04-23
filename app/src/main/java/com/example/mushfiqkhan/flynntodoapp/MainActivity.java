@@ -1,6 +1,7 @@
 package com.example.mushfiqkhan.flynntodoapp;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -10,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,10 +39,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.newPost);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -48,52 +48,74 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
+        FloatingActionButton completedfab = (FloatingActionButton) findViewById(R.id.completed);
+        completedfab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getList(true);
+                TextView text = (TextView) findViewById(R.id.textTitle);
+                text.setText("Completed Tasks");
+            }
+        });
 
+        FloatingActionButton incompletedfab = (FloatingActionButton) findViewById(R.id.incompleted);
+        incompletedfab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getList(false);
+                TextView text = (TextView) findViewById(R.id.textTitle);
+                text.setText("Incompleted Tasks");
+            }
+        });
 
         adapter = new ArrayAdapter<String>(this,
                 R.layout.activity_listview, listItems);
         ListView listView = (ListView) findViewById(R.id.mobile_list);
         listView.setAdapter(adapter);
 
-        Thread thread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                try  {
-                    URL url = null;
-                    HttpURLConnection urlConnection = null;
-                    try {
-                        url = new URL("http://jsonplaceholder.typicode.com/todos");
-                        urlConnection = (HttpURLConnection) url.openConnection();
-                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                        int responseCode = urlConnection.getResponseCode();
-
-                        if(responseCode == HttpURLConnection.HTTP_OK){
-                            String server_response = readStream(urlConnection.getInputStream());
-                            JSONArray jsonArray = new JSONArray(server_response);
-                            for (int i = 0; i < jsonArray.length(); i++) {
-                                JSONObject explrObject = jsonArray.getJSONObject(i);
-                                listItems.add(explrObject.getString("title"));
-                            }
-                            adapter.notifyDataSetChanged();
-                        }
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    finally {
-                        urlConnection.disconnect();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        thread.start();
-
+        getList(true);
     }
+
+    private void getList(final Boolean completed) {
+        StrictMode.ThreadPolicy tp =  StrictMode.ThreadPolicy.LAX;
+        StrictMode.setThreadPolicy(tp);
+        try  {
+            URL url = null;
+            HttpURLConnection urlConnection = null;
+            try {
+                url = new URL("http://jsonplaceholder.typicode.com/todos");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                int responseCode = urlConnection.getResponseCode();
+                if(responseCode == HttpURLConnection.HTTP_OK) {
+                    String server_response = readStream(urlConnection.getInputStream());
+                    JSONArray jsonArray = new JSONArray(server_response);
+                    listItems.clear();
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject explrObject = jsonArray.getJSONObject(i);
+                        if (completed) {
+                            if (explrObject.getBoolean("completed"))
+                                listItems.add(explrObject.getString("title"));
+                        } else {
+                            if (!(explrObject.getBoolean("completed")))
+                                listItems.add(explrObject.getString("title"));
+                        }
+                    }
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            finally {
+                urlConnection.disconnect();
+                adapter.notifyDataSetChanged();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private String readStream(InputStream in) {
         BufferedReader reader = null;
