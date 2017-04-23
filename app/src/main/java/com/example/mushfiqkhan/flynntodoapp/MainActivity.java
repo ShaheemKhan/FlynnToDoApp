@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        
         adapter = new ArrayAdapter<String>(this,
                 R.layout.activity_listview, listItems);
         ListView listView = (ListView) findViewById(R.id.mobile_list);
