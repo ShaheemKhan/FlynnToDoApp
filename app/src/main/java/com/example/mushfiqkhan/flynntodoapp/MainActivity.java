@@ -8,8 +8,16 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
+
+    ArrayList<String> listItems = new ArrayList<String>();
+    ArrayAdapter<String> adapter;
+    int clickCounter=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,10 +30,15 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                listItems.add("Clicked : "+clickCounter++);
+                adapter.notifyDataSetChanged();
             }
         });
+
+        adapter = new ArrayAdapter<String>(this,
+                R.layout.activity_listview, listItems);
+        ListView listView = (ListView) findViewById(R.id.mobile_list);
+        listView.setAdapter(adapter);
     }
 
     @Override
