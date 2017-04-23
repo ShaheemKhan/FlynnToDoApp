@@ -11,10 +11,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,8 +47,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.newPost);
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton newTodo = (FloatingActionButton) findViewById(R.id.newPost);
+        newTodo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
@@ -77,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         HttpURLConnection urlConnection;
-                        String url;
                         String data = obj.toString();
                         String result = null;
                         try {
@@ -145,8 +146,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        FloatingActionButton incompletedfab = (FloatingActionButton) findViewById(R.id.incompleted);
-        incompletedfab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton incompletefab = (FloatingActionButton) findViewById(R.id.incompleted);
+        incompletefab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 getList(false);
@@ -157,8 +158,16 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new ArrayAdapter<String>(this,
                 R.layout.activity_listview, listItems);
-        ListView listView = (ListView) findViewById(R.id.mobile_list);
+        final ListView listView = (ListView) findViewById(R.id.mobile_list);
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                listItems.remove(position);
+                adapter.notifyDataSetChanged();
+            }
+        });
+
 
         getList(true);
     }
